@@ -1,9 +1,13 @@
 import { assetUrl } from "../assetUrl";
 
-const SRC = assetUrl("kimchi-conqueror.mp3");
 const VOLUME = 0.42;
 
-/** In-tank radio — loops the Kimchi Conqueror theme */
+const TRACKS = [
+  { src: assetUrl("kimchi-conqueror.mp3"), title: "Kimchi Conqueror" },
+  { src: assetUrl("kimchi-love.mp3"), title: "Kimchi Love" },
+] as const;
+
+/** In-tank radio — playlist of kimchi bangers */
 export class Radio {
   private readonly audio: HTMLAudioElement;
   private unlocked = false;
@@ -11,16 +15,22 @@ export class Radio {
   private playing = false;
   private volume = 0;
   private targetVol = 0;
+  private trackIndex = 0;
 
   constructor() {
-    this.audio = new Audio(SRC);
-    this.audio.loop = true;
+    this.audio = new Audio(TRACKS[0].src);
+    this.audio.loop = false;
     this.audio.preload = "auto";
     this.audio.volume = 0;
+    this.audio.addEventListener("ended", () => this.nextTrack());
   }
 
   get on(): boolean {
     return this.wantOn;
+  }
+
+  get trackTitle(): string {
+    return TRACKS[this.trackIndex].title;
   }
 
   /** Call after a user gesture */
@@ -43,6 +53,22 @@ export class Radio {
   toggle(): boolean {
     this.wantOn = !this.wantOn;
     return this.wantOn;
+  }
+
+  /** Skip to next song (also wraps) */
+  nextTrack(): void {
+    this.trackIndex = (this.trackIndex + 1) % TRACKS.length;
+    const wasPlaying = this.playing || this.targetVol > 0.01;
+    this.audio.src = TRACKS[this.trackIndex].src;
+    this.audio.currentTime = 0;
+    this.playing = false;
+    if (wasPlaying && this.wantOn) {
+      void this.audio.play().then(() => {
+        this.playing = true;
+      }).catch(() => {
+        this.playing = false;
+      });
+    }
   }
 
   /** active = round is playing (not paused/menu) */

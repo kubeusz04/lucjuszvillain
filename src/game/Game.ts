@@ -73,6 +73,7 @@ export class Game {
   private interactWasDown = false;
   private pauseWasDown = false;
   private radioWasDown = false;
+  private lastRadioTitle = "";
   private readonly aimPoint = new THREE.Vector3();
   private readonly muzzlePoint = new THREE.Vector3();
 
@@ -210,7 +211,7 @@ export class Game {
     this.hud.showHud(true);
     this.minimap.setVisible(true);
     this.radio.setActive(true);
-    this.hud.setRadio(this.radio.on);
+    this.hud.setRadio(this.radio.on, this.radio.trackTitle);
     this.syncTouchControls();
   }
 
@@ -391,7 +392,7 @@ export class Game {
     this.hud.setCash(this.upgrades.cash);
     this.hud.setSpeed(0);
     this.hud.setMission(this.missions.label);
-    this.hud.setRadio(this.radio.on);
+    this.hud.setRadio(this.radio.on, this.radio.trackTitle);
     this.hud.setDistrict(
       this.city.getDistrictAt(this.car.mesh.position.x, this.car.mesh.position.z)
         .name,
@@ -494,11 +495,19 @@ export class Game {
     this.engine.update(dt, engineActive ? this.car.speed : 0, engineActive);
     this.radio.setActive(this.state === "playing" && !this.hud.shopOpen);
     this.radio.update(dt);
+    if (
+      this.state === "playing" &&
+      this.radio.on &&
+      this.radio.trackTitle !== this.lastRadioTitle
+    ) {
+      this.lastRadioTitle = this.radio.trackTitle;
+      this.hud.setRadio(true, this.radio.trackTitle);
+    }
 
     const radioKey = this.input.radio;
     if (radioKey && !this.radioWasDown && this.state === "playing") {
       const on = this.radio.toggle();
-      this.hud.setRadio(on);
+      this.hud.setRadio(on, this.radio.trackTitle);
       this.hud.showMissionToast(on ? "RADIO ON" : "RADIO OFF");
       this.radio.setActive(on && !this.hud.shopOpen);
     }
