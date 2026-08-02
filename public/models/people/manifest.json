@@ -1,0 +1,73 @@
+[
+  {
+    "id": "01_casual_female_g",
+    "label": "Casual Female G",
+    "file": "01_casual_female_g.glb",
+    "meshes": [
+      "casual_Female_G_peopleColorsFam_0"
+    ]
+  },
+  {
+    "id": "02_casual_female_k",
+    "label": "Casual Female K (punk hair)",
+    "file": "02_casual_female_k.glb",
+    "meshes": [
+      "casual_Female_K__peopleColorsFam_0",
+      "acc_hair_punkin__peopleColorsFam_0"
+    ]
+  },
+  {
+    "id": "03_casual_male_g",
+    "label": "Casual Male G",
+    "file": "03_casual_male_g.glb",
+    "meshes": [
+      "casual_Male_G_peopleColorsFam_0"
+    ]
+  },
+  {
+    "id": "04_casual_male_k",
+    "label": "Casual Male K (glasses)",
+    "file": "04_casual_male_k.glb",
+    "meshes": [
+      "casual_Male_K_peopleColors_0",
+      "acc_intelect_glasses_peopleColors_0"
+    ]
+  },
+  {
+    "id": "05_doctor_male",
+    "label": "Doctor Male",
+    "file": "05_doctor_male.glb",
+    "meshes": [
+      "Doctor_Male_B_peopleColors_0",
+      "boxphone_peopleColors_0",
+      "stetho_peopleColors_0"
+    ]
+  },
+  {
+    "id": "06_elder_female",
+    "label": "Elder Female",
+    "file": "06_elder_female.glb",
+    "meshes": [
+      "elder_Female_A_peopleColors_0",
+      "acc_intelect_glasses001_peopleColors_0",
+      "hair_oldLady_peopleColors_0"
+    ]
+  },
+  {
+    "id": "07_little_boy",
+    "label": "Little Boy",
+    "file": "07_little_boy.glb",
+    "meshes": [
+      "little_boy_B_peopleColors_0",
+      "hair_peopleColors_0"
+    ]
+  },
+  {
+    "id": "08_police_female",
+    "label": "Police Female",
+    "file": "08_police_female.glb",
+    "meshes": [
+      "police_Female_A_peopleColors_0"
+    ]
+  }
+]

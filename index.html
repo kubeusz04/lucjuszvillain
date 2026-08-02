@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Lucjusz Villain Drive</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="game-root">
+      <canvas id="game-canvas"></canvas>
+
+      <div id="hud" class="hidden">
+        <div class="hud-stat">
+          <span class="label">SCORE</span>
+          <span id="score-value">0</span>
+          <span class="label hi-label">BEST</span>
+          <span id="best-value" class="best-value">0</span>
+          <span class="label hi-label">KIMCHI</span>
+          <span id="kimchi-value" class="best-value">0</span>
+        </div>
+        <div class="hud-stat hud-wanted">
+          <span class="label">DISTRICT</span>
+          <span id="district-name">—</span>
+          <span class="label wanted-label">WANTED</span>
+          <div id="wanted-stars" class="wanted-stars" aria-label="wanted level">
+            <span data-star="1">★</span>
+            <span data-star="2">★</span>
+            <span data-star="3">★</span>
+            <span data-star="4">★</span>
+            <span data-star="5">★</span>
+          </div>
+          <span id="wanted-label" class="wanted-tier">Clean</span>
+          <div id="wanted-bar" class="wanted-bar">
+            <div id="wanted-bar-fill" class="wanted-bar-fill"></div>
+          </div>
+        </div>
+        <div class="hud-stat hud-right">
+          <div class="hud-lives-row">
+            <div class="hud-speed" id="speedo">
+              <span class="label">SPEED</span>
+              <span class="speed-readout"
+                ><span id="speed-value">0</span
+                ><span class="speed-unit"> km/h</span></span
+              >
+            </div>
+            <div class="hud-lives">
+              <span class="label">LIVES</span>
+              <span id="lives-value" class="lives-value">♥♥♥</span>
+            </div>
+          </div>
+          <span class="label">CASH / TIME</span>
+          <span
+            ><span id="cash-value">$0</span>
+            ·
+            <span id="time-value">90</span></span
+          >
+          <span class="label clock-label">TIME OF DAY</span>
+          <span id="clock-value" class="clock-value">Day</span>
+          <span class="label clock-label">WEATHER</span>
+          <span id="weather-value" class="clock-value">Clear</span>
+        </div>
+      </div>
+
+      <div id="wanted-flash" class="wanted-flash hidden"></div>
+      <div id="mission-hud" class="mission-hud hidden">
+        <span class="label">MISSION</span>
+        <span id="mission-text">—</span>
+      </div>
+      <div id="mission-toast" class="mission-toast hidden"></div>
+
+      <div id="shop-prompt" class="shop-prompt hidden">E — Tuning</div>
+
+      <div id="radio-hud" class="radio-hud hidden">
+        <span class="radio-label">RADIO</span>
+        <span id="radio-track">Kimchi Conqueror</span>
+        <span class="radio-hint">R — on/off</span>
+      </div>
+
+      <div id="crosshair" class="crosshair hidden" aria-hidden="true">
+        <span class="ch-h"></span>
+        <span class="ch-v"></span>
+        <span class="ch-ring"></span>
+        <span class="ch-dot"></span>
+      </div>
+
+      <canvas id="minimap" class="minimap hidden" width="148" height="148" aria-label="minimap"></canvas>
+
+      <div id="touch-controls" class="touch-controls hidden" aria-hidden="true">
+        <div id="touch-zone-drive" class="touch-zone touch-zone-drive"></div>
+        <div id="touch-zone-look" class="touch-zone touch-zone-look"></div>
+        <div class="touch-actions">
+          <button type="button" id="touch-btn-fire" class="touch-btn touch-btn-fire">FIRE</button>
+          <button type="button" id="touch-btn-interact" class="touch-btn">E</button>
+          <button type="button" id="touch-btn-radio" class="touch-btn">R</button>
+          <button type="button" id="touch-btn-garage" class="touch-btn">U</button>
+          <button type="button" id="touch-btn-pause" class="touch-btn touch-btn-pause">II</button>
+        </div>
+      </div>
+
+      <div id="overlay" class="overlay">
+        <div class="overlay-content">
+          <div id="menu-mode" class="menu-panel">
+            <h1>LUCJUSZ VILLAIN DRIVE</h1>
+            <p class="hint">Choose control mode</p>
+            <div class="overlay-actions menu-actions mode-pick">
+              <button id="mode-pc-btn" type="button">PC</button>
+              <button id="mode-android-btn" type="button" class="btn-secondary">
+                ANDROID
+              </button>
+            </div>
+            <p class="hint mode-hint">
+              PC — keyboard &amp; mouse · Android — left/right touch pads
+            </p>
+          </div>
+
+          <div id="menu-main" class="menu-panel hidden">
+            <h1 id="overlay-title">LUCJUSZ VILLAIN DRIVE</h1>
+            <p id="overlay-subtitle">
+              Crush pedestrians in your tank. Collect kimchi. Escape the cops.
+            </p>
+            <p id="overlay-highscore" class="highscore">High score: 0</p>
+            <p id="overlay-save" class="save-status">Progress saves automatically</p>
+            <p id="overlay-hint" class="hint">
+              WASD — drive · mouse — camera · Esc — pause · Enter — start
+            </p>
+            <div class="mode-switch" role="group" aria-label="Control mode">
+              <button type="button" id="mode-switch-pc" class="mode-chip active">PC</button>
+              <button type="button" id="mode-switch-android" class="mode-chip">ANDROID</button>
+            </div>
+            <div class="overlay-actions menu-actions">
+              <button id="overlay-btn" type="button">PLAY</button>
+              <button id="shop-open-btn" type="button" class="btn-secondary">
+                GARAGE
+              </button>
+              <button id="menu-stats-btn" type="button" class="btn-secondary">
+                PROGRESS
+              </button>
+              <button id="menu-controls-btn" type="button" class="btn-secondary">
+                CONTROLS
+              </button>
+              <button id="menu-reset-btn" type="button" class="btn-danger">
+                RESET PROGRESS
+              </button>
+            </div>
+          </div>
+
+          <div id="menu-pause" class="menu-panel hidden">
+            <h1>PAUSED</h1>
+            <p class="hint">Garage upgrades and high score are saved</p>
+            <div class="overlay-actions menu-actions">
+              <button id="pause-resume-btn" type="button">RESUME</button>
+              <button id="pause-garage-btn" type="button" class="btn-secondary">
+                GARAGE
+              </button>
+              <button id="pause-menu-btn" type="button" class="btn-secondary">
+                MAIN MENU
+              </button>
+            </div>
+          </div>
+
+          <div id="menu-stats" class="menu-panel hidden">
+            <h1>PROGRESS</h1>
+            <ul id="stats-list" class="stats-list"></ul>
+            <div class="overlay-actions">
+              <button id="stats-back-btn" type="button" class="btn-secondary">
+                BACK
+              </button>
+            </div>
+          </div>
+
+          <div id="menu-controls" class="menu-panel hidden">
+            <h1>CONTROLS</h1>
+            <ul id="controls-list-pc" class="controls-list">
+              <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> — drive</li>
+              <li><kbd>Mouse</kbd> — camera (LMB / RMB)</li>
+              <li><kbd>E</kbd> — shop on location</li>
+              <li><kbd>U</kbd> — garage</li>
+              <li><kbd>Esc</kbd> — pause / menu</li>
+              <li><kbd>Enter</kbd> — start / restart</li>
+              <li><kbd>LMB</kbd> / <kbd>Space</kbd> / <kbd>F</kbd> — fire cannon (peds &amp; cops)</li>
+              <li><kbd>R</kbd> — radio on / off</li>
+              <li>Drive over glowing jars to collect kimchi</li>
+              <li>Police ram you — lose a life</li>
+              <li>Escape far away to lose WANTED</li>
+            </ul>
+            <ul id="controls-list-android" class="controls-list hidden">
+              <li>Left half of screen — drive / steer</li>
+              <li>Right half of screen — camera</li>
+              <li><kbd>FIRE</kbd> — cannon</li>
+              <li><kbd>E</kbd> — shop on location</li>
+              <li><kbd>U</kbd> — garage</li>
+              <li><kbd>R</kbd> — radio</li>
+              <li><kbd>II</kbd> — pause</li>
+              <li>Drive over glowing jars to collect kimchi</li>
+              <li>Police ram you — lose a life</li>
+              <li>Escape far away to lose WANTED</li>
+            </ul>
+            <div class="overlay-actions">
+              <button id="controls-back-btn" type="button" class="btn-secondary">
+                BACK
+              </button>
+            </div>
+          </div>
+
+          <div id="menu-reset" class="menu-panel hidden">
+            <h1>RESET?</h1>
+            <p>This deletes cash, upgrades, high score, and stats.</p>
+            <div class="overlay-actions">
+              <button id="reset-confirm-btn" type="button" class="btn-danger">
+                YES, CLEAR ALL
+              </button>
+              <button id="reset-cancel-btn" type="button" class="btn-secondary">
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="shop" class="shop hidden">
+        <div class="shop-panel">
+          <div class="shop-header">
+            <h2 id="shop-title">GARAGE</h2>
+            <p class="shop-cash">Cash: <span id="shop-cash">$0</span></p>
+          </div>
+          <div class="shop-tabs">
+            <button type="button" class="shop-tab active" data-tab="performance">
+              TUNING
+            </button>
+            <button type="button" class="shop-tab" data-tab="paint">PAINT</button>
+            <button type="button" class="shop-tab" data-tab="style">STYLE</button>
+          </div>
+          <div id="shop-list" class="shop-list"></div>
+          <button id="shop-close-btn" type="button" class="btn-secondary">
+            CLOSE
+          </button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
