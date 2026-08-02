@@ -746,10 +746,10 @@ export class City {
     }
   }
 
-  /** Middle of a vertical road — good car start */
+  /** Center of the city map */
   getStartPosition(): THREE.Vector3 {
-    const { roadWidth } = this.cfg;
-    return new THREE.Vector3(roadWidth / 2, 0, this.size / 2);
+    const mid = this.size / 2;
+    return new THREE.Vector3(mid, 0, mid);
   }
 }
 
