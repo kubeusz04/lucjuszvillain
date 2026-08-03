@@ -4,7 +4,7 @@ import { TouchControls } from "../input/TouchControls";
 import { HUD } from "../ui/HUD";
 import { Minimap } from "../ui/Minimap";
 import { City } from "../world/City";
-import { addCityWrapTiles, updateCityWrapTiles, type WrapTile } from "../world/InfiniteWrap";
+import { addCityWrapTiles, updateCityWrapTiles, setWrapEdgeMargin, type WrapTile } from "../world/InfiniteWrap";
 import { ShopNetwork } from "../world/Shops";
 import { Car } from "../entities/Car";
 import { PedestrianManager } from "../entities/Pedestrian";
@@ -17,6 +17,7 @@ import { Highscore } from "./Highscore";
 import { MissionSystem } from "./Missions";
 import { DayNightCycle } from "./DayNight";
 import { WeatherSystem } from "./Weather";
+import { GraphicsQuality } from "./GraphicsQuality";
 import { Progress } from "./Progress";
 import { EngineSound } from "../audio/EngineSound";
 import { Radio } from "../audio/Radio";
@@ -42,6 +43,7 @@ export class Game {
   private readonly missions = new MissionSystem();
   private readonly engine = new EngineSound();
   private readonly radio = new Radio();
+  private readonly quality = new GraphicsQuality();
   private readonly people: PeopleLibrary;
   private readonly kimchiTpl: KimchiTemplate;
   private readonly skyRig = new THREE.Group();
@@ -101,13 +103,19 @@ export class Game {
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: this.quality.antialias,
       powerPreference: "high-performance",
+      stencil: false,
+      depth: true,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, this.quality.dprCap),
+    );
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled = this.quality.shadows;
+    this.renderer.shadowMap.type = this.quality.softShadows
+      ? THREE.PCFSoftShadowMap
+      : THREE.BasicShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.hud = new HUD(() => this.startRound());
@@ -157,7 +165,7 @@ export class Game {
       this.scene,
       this.city.spawnPoints,
       this.city.size,
-      100,
+      this.quality.pedCount,
       this.city.crosswalks,
       this.people,
     );
@@ -315,8 +323,11 @@ export class Game {
     sunLight.position.set(80, 160, 40);
     sunLight.target.position.set(this.city.size / 2, 0, this.city.size / 2);
     this.scene.add(sunLight.target);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.castShadow = this.quality.shadows;
+    sunLight.shadow.mapSize.set(
+      this.quality.shadowMapSize,
+      this.quality.shadowMapSize,
+    );
     sunLight.shadow.bias = -0.0003;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 280;
@@ -341,6 +352,30 @@ export class Game {
     this.dayNight.setLamps(this.city.streetLamps);
     this.dayNight.apply();
     this.weather = new WeatherSystem(this.scene);
+    this.applyGraphicsQuality();
+  }
+
+  private applyGraphicsQuality(): void {
+    const q = this.quality;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, q.dprCap));
+    this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+    this.renderer.shadowMap.enabled = q.shadows;
+    this.renderer.shadowMap.type = q.softShadows
+      ? THREE.PCFSoftShadowMap
+      : THREE.BasicShadowMap;
+    this.renderer.shadowMap.needsUpdate = true;
+
+    if (this.sunLight) {
+      this.sunLight.castShadow = q.shadows;
+      const size = q.shadowMapSize;
+      if (this.sunLight.shadow.mapSize.x !== size) {
+        this.sunLight.shadow.map?.dispose();
+        this.sunLight.shadow.map = null;
+        this.sunLight.shadow.mapSize.set(size, size);
+      }
+    }
+    this.weather?.setRainQuality(q.rainFraction);
+    setWrapEdgeMargin(q.wrapMargin);
   }
 
   private syncSky(): void {
@@ -478,6 +513,10 @@ export class Game {
   }
 
   update(dt: number): void {
+    if (this.quality.update(dt)) {
+      this.applyGraphicsQuality();
+    }
+
     this.dayNight.update(dt);
     const wx = this.weather.update(dt, this.camera);
     this.dayNight.weatherFogBoost = wx.fogBoost;
@@ -825,10 +864,12 @@ export class Game {
 
   render(): void {
     this.syncSky();
-    this.syncSunShadow();
+    if (this.quality.shadows) this.syncSunShadow();
     this.dayNight.updateLampCull(
       this.camera.position.x,
       this.camera.position.z,
+      this.quality.maxLamps,
+      this.quality.lampDist,
     );
     updateCityWrapTiles(this.wrapTiles, this.camera.position, this.city.size);
     this.peds.syncWrapGhosts(this.camera.position);
@@ -841,6 +882,9 @@ export class Game {
   private onResize(): void {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, this.quality.dprCap),
+    );
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 }

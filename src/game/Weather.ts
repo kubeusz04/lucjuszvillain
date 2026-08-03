@@ -49,6 +49,8 @@ export class WeatherSystem {
   private readonly rain: THREE.Points;
   private readonly rainPositions: Float32Array;
   private readonly rainCount = 1200;
+  private rainActive = 1200;
+  private rainQuality = 1;
   private readonly rainGroup = new THREE.Group();
   private readonly flashLight: THREE.AmbientLight;
 
@@ -200,19 +202,33 @@ export class WeatherSystem {
     return mods;
   }
 
+  /** 0..1 — fraction of rain particles to simulate / draw */
+  setRainQuality(fraction: number): void {
+    this.rainQuality = THREE.MathUtils.clamp(fraction, 0.1, 1);
+  }
+
   private updateRain(dt: number, camera: THREE.Camera, intensity: number): void {
     const mat = this.rain.material as THREE.PointsMaterial;
     mat.opacity = intensity * 0.55;
     this.rain.visible = intensity > 0.05;
     this.rainGroup.position.copy(camera.position);
 
-    if (intensity < 0.05) return;
+    if (intensity < 0.05) {
+      this.rain.geometry.setDrawRange(0, 0);
+      return;
+    }
+
+    this.rainActive = Math.max(
+      80,
+      Math.floor(this.rainCount * this.rainQuality * (0.45 + intensity * 0.55)),
+    );
+    this.rain.geometry.setDrawRange(0, this.rainActive);
 
     const speed = 28 + intensity * 35;
     const drift = 4 + intensity * 6;
     const pos = this.rain.geometry.attributes.position as THREE.BufferAttribute;
 
-    for (let i = 0; i < this.rainCount; i++) {
+    for (let i = 0; i < this.rainActive; i++) {
       let y = pos.getY(i) - speed * dt;
       let x = pos.getX(i) + drift * dt * 0.35;
       let z = pos.getZ(i);

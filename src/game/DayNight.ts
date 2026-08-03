@@ -170,16 +170,42 @@ export class DayNightCycle {
     void this.skyRig;
   }
 
-  /** Cull distant street lamps — call each frame with camera position */
-  updateLampCull(camX: number, camZ: number): void {
+  /** Cull distant street lamps — hard-cap nearest N for GPU cost */
+  updateLampCull(
+    camX: number,
+    camZ: number,
+    maxLamps = 24,
+    maxDist = 85,
+  ): void {
     const n = this.nightFactor;
     const lampMul = smoothstep(0.15, 0.55, n);
-    const maxDistSq = 85 * 85;
+    const maxDistSq = maxDist * maxDist;
+
+    if (lampMul <= 0.08) {
+      for (const lamp of this.lamps) {
+        lamp.light.intensity = 0;
+        lamp.light.visible = false;
+        lamp.bulb.visible = false;
+      }
+      return;
+    }
+
+    // Score nearby lamps, pick closest
+    const scored: { lamp: StreetLamp; d: number }[] = [];
     for (const lamp of this.lamps) {
       const dx = lamp.light.position.x - camX;
       const dz = lamp.light.position.z - camZ;
-      const near = dx * dx + dz * dz < maxDistSq;
-      if (near && lampMul > 0.08) {
+      const d = dx * dx + dz * dz;
+      if (d < maxDistSq) scored.push({ lamp, d });
+    }
+    scored.sort((a, b) => a.d - b.d);
+
+    const on = new Set<StreetLamp>();
+    const limit = Math.min(maxLamps, scored.length);
+    for (let i = 0; i < limit; i++) on.add(scored[i].lamp);
+
+    for (const lamp of this.lamps) {
+      if (on.has(lamp)) {
         lamp.light.intensity = lamp.baseIntensity * lampMul;
         lamp.light.visible = true;
         lamp.bulb.visible = true;

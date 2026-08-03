@@ -74,7 +74,11 @@ export function addCityWrapTiles(
 }
 
 /** How close to an edge (world units) before showing the neighbor tile */
-const EDGE_MARGIN = 95;
+let edgeMargin = 95;
+
+export function setWrapEdgeMargin(margin: number): void {
+  edgeMargin = margin;
+}
 
 /**
  * Only show wrap tiles for edges the camera is near.
@@ -87,10 +91,10 @@ export function updateCityWrapTiles(
 ): void {
   const cx = cameraPos.x;
   const cz = cameraPos.z;
-  const nearLoX = cx < EDGE_MARGIN;
-  const nearHiX = cx > citySize - EDGE_MARGIN;
-  const nearLoZ = cz < EDGE_MARGIN;
-  const nearHiZ = cz > citySize - EDGE_MARGIN;
+  const nearLoX = cx < edgeMargin;
+  const nearHiX = cx > citySize - edgeMargin;
+  const nearLoZ = cz < edgeMargin;
+  const nearHiZ = cz > citySize - edgeMargin;
 
   for (const tile of tiles) {
     const needX =
